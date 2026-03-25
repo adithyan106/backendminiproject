@@ -1,11 +1,12 @@
-# Use Java 17 (Spring Boot compatible)
-FROM openjdk:17-jdk-slim
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-# Set working directory
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
+
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-# Copy jar file from target folder
-COPY target/*.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
