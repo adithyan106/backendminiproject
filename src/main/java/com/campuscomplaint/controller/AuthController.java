@@ -14,11 +14,17 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000") // Assuming React runs on 3000
 public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @GetMapping("/register")
+    public ResponseEntity<?> registerHelp() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Use POST /api/auth/register with JSON body: {name, email, password, role}");
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserDto userDto) {
@@ -42,6 +48,13 @@ public class AuthController {
         response.put("message", "User registered successfully");
         response.put("role", newUser.getRole());
         response.put("name", newUser.getName());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/login")
+    public ResponseEntity<?> loginHelp() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Use POST /api/auth/login with JSON body: {email, password, role}");
         return ResponseEntity.ok(response);
     }
 
