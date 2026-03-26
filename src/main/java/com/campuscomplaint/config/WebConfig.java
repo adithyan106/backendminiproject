@@ -15,12 +15,16 @@ public class WebConfig implements WebMvcConfigurer {
     private String uploadDir;
 
     @Value("${app.cors.allowed-origin-patterns:http://localhost:3000,https://*.vercel.app}")
-    private String[] allowedOriginPatterns;
+    private String allowedOriginPatternsStr;
 
     @Override
     public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
+        String[] patterns = allowedOriginPatternsStr.split(",");
+        for (int i = 0; i < patterns.length; i++) {
+            patterns[i] = patterns[i].trim();
+        }
         registry.addMapping("/api/**")
-                .allowedOriginPatterns(allowedOriginPatterns)
+                .allowedOriginPatterns(patterns)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
