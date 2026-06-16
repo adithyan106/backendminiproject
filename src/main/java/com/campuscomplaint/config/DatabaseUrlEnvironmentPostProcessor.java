@@ -7,13 +7,11 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converts Render-style DATABASE_URL values into Spring datasource properties.
+ * Converts Render-style database URLs into Spring datasource properties.
  */
 public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -21,11 +19,11 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        if (hasEnvironmentVariable(environment, "SPRING_DATASOURCE_URL")) {
-            return;
-        }
-
-        String databaseUrl = environment.getProperty("DATABASE_URL");
+        String databaseUrl = firstNonBlankEnvironmentVariable(
+                environment,
+                "SPRING_DATASOURCE_URL",
+                "DATABASE_URL"
+        );
         if (databaseUrl == null || databaseUrl.isBlank()) {
             return;
         }
@@ -79,17 +77,17 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
     }
 
     private void addCredentials(URI uri, ConfigurableEnvironment environment, Map<String, Object> properties) {
-        String userInfo = uri.getRawUserInfo();
+        String userInfo = uri.getUserInfo();
         if (userInfo == null || userInfo.isBlank()) {
             return;
         }
 
         String[] credentials = userInfo.split(":", 2);
         if (!hasEnvironmentVariable(environment, "SPRING_DATASOURCE_USERNAME")) {
-            properties.put("spring.datasource.username", decode(credentials[0]));
+            properties.put("spring.datasource.username", credentials[0]);
         }
         if (credentials.length > 1 && !hasEnvironmentVariable(environment, "SPRING_DATASOURCE_PASSWORD")) {
-            properties.put("spring.datasource.password", decode(credentials[1]));
+            properties.put("spring.datasource.password", credentials[1]);
         }
     }
 
@@ -97,8 +95,14 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
         return environment.getSystemEnvironment().containsKey(name);
     }
 
-    private String decode(String value) {
-        return URLDecoder.decode(value, StandardCharsets.UTF_8);
+    private String firstNonBlankEnvironmentVariable(ConfigurableEnvironment environment, String... names) {
+        for (String name : names) {
+            Object value = environment.getSystemEnvironment().get(name);
+            if (value != null && !value.toString().isBlank()) {
+                return value.toString();
+            }
+        }
+        return null;
     }
 
     @Override
