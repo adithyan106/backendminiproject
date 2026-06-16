@@ -83,16 +83,17 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
         }
 
         String[] credentials = userInfo.split(":", 2);
-        if (!hasEnvironmentVariable(environment, "SPRING_DATASOURCE_USERNAME")) {
+        if (!hasNonBlankEnvironmentVariable(environment, "SPRING_DATASOURCE_USERNAME")) {
             properties.put("spring.datasource.username", credentials[0]);
         }
-        if (credentials.length > 1 && !hasEnvironmentVariable(environment, "SPRING_DATASOURCE_PASSWORD")) {
+        if (credentials.length > 1 && !hasNonBlankEnvironmentVariable(environment, "SPRING_DATASOURCE_PASSWORD")) {
             properties.put("spring.datasource.password", credentials[1]);
         }
     }
 
-    private boolean hasEnvironmentVariable(ConfigurableEnvironment environment, String name) {
-        return environment.getSystemEnvironment().containsKey(name);
+    private boolean hasNonBlankEnvironmentVariable(ConfigurableEnvironment environment, String name) {
+        Object value = environment.getSystemEnvironment().get(name);
+        return value != null && !value.toString().isBlank();
     }
 
     private String firstNonBlankEnvironmentVariable(ConfigurableEnvironment environment, String... names) {
